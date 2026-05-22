@@ -25,6 +25,7 @@ if (!globalWithMongoose.mongoose) {
 const cached = globalWithMongoose.mongoose;
 
 export async function connectDB() {
+  console.log("Connecting to MongoDB...");
   if (cached.conn) {
     return cached.conn;
   }

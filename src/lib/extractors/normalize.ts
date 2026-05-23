@@ -1,3 +1,4 @@
+import { vendorPolicies } from "../policies/vendors";
 export type SupportedCurrency = "USD" | "INR" | "UNKNOWN";
 
 export type SpendCategory =
@@ -41,6 +42,13 @@ function detectCurrency(text: string): SupportedCurrency {
 
   return "UNKNOWN";
 }
+function resolveVendorPolicy(vendor: string) {
+  const lower = vendor.toLowerCase();
+
+  return vendorPolicies.find((policy) =>
+    policy.aliases.some((alias) => lower.includes(alias)),
+  );
+}
 
 function normalizeVendor(record: RawRecord): string {
   return String(
@@ -80,14 +88,16 @@ export function normalizeRecords(
 
     const currency = detectCurrency(combinedText);
 
+    const vendorPolicy = resolveVendorPolicy(vendor);
+
     return {
-      vendor,
+      vendor: vendorPolicy?.canonicalName || vendor,
 
       amount,
 
       currency,
 
-      category: "Unknown",
+      category: vendorPolicy?.category || "Unknown",
 
       billingModel: "Unknown",
 

@@ -1,49 +1,79 @@
 import { NextResponse } from "next/server";
-import { parseCSV } from "../../../lib/parsers/csv";
 
-export async function POST(req: Request) {
+import jwt from "jsonwebtoken";
+
+import { connectDB } from "../../../lib/db";
+
+import { ingestFile } from "../../../lib/ingest";
+
+export async function POST(request: Request) {
   try {
-    const formData = await req.formData();
+    await connectDB();
 
-    const file = formData.get("file");
-    if (!file || !(file instanceof File)) {
+    const cookieHeader = request.headers.get("cookie");
+
+    const token = cookieHeader
+      ?.split("; ")
+      .find((row) => row.startsWith("token="))
+      ?.split("=")[1];
+
+    if (!token) {
       return NextResponse.json(
         {
-          error: "No valid file uploaded",
+          error: "Unauthorized",
         },
+
+        {
+          status: 401,
+        },
+      );
+    }
+
+    const decoded = jwt.verify(
+      token,
+
+      process.env.JWT_SECRET!,
+    ) as {
+      userId: string;
+    };
+
+    const formData = await request.formData();
+
+    const file = formData.get("file") as File;
+
+    if (!file) {
+      return NextResponse.json(
+        {
+          error: "No file uploaded",
+        },
+
         {
           status: 400,
         },
       );
     }
 
-    const bytes = await file.arrayBuffer();
+    const result = await ingestFile(
+      file,
 
-    const buffer = Buffer.from(bytes);
-
-    const csvText = buffer.toString("utf-8");
-
-    const records = parseCSV(csvText);
-
-    console.log("Parsed Records:", records);
-
-    console.log("Received File:", file);
-
-    return NextResponse.json(
-      {
-        success: true,
-      },
-      {
-        status: 200,
-      },
+      decoded.userId,
     );
+
+    return NextResponse.json({
+      success: true,
+
+      normalizedRecords: result.normalizedRecords,
+
+      subscriptionSignals: result.subscriptionSignals,
+    });
   } catch (error) {
-    console.error("Upload Error:", error);
+    console.error(error);
 
     return NextResponse.json(
       {
-        error: "Upload failed",
+        error: "Upload ingestion failed",
       },
+
       {
         status: 500,
       },

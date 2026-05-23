@@ -1,5 +1,6 @@
 import FinancialRecord from "../models/FinancialRecord";
 import { extractPDFInvoice } from "./extractors/pdfInvoice";
+import SubscriptionSignalModel from "../models/SubscriptionSignal";
 
 import { parseFile } from "./parsers";
 
@@ -67,6 +68,23 @@ export async function ingestFile(
         sourceType: record.sourceType,
 
         date: record.date,
+      })),
+    );
+    await SubscriptionSignalModel.insertMany(
+      subscriptionSignals.map((signal) => ({
+        userId,
+
+        vendor: signal.vendor,
+
+        billingModel: signal.billingModel,
+
+        recurringLikelihood: signal.recurringLikelihood,
+
+        amount: signal.amount,
+
+        currency: signal.currency,
+
+        date: signal.date,
       })),
     );
 

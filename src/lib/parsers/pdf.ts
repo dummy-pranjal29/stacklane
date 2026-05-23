@@ -3,9 +3,9 @@ import PDFParser from "pdf2json";
 export async function parsePDF(buffer: Buffer): Promise<string> {
   return new Promise((resolve, reject) => {
     try {
-      const pdfParser = new PDFParser(undefined, 1);
+      const pdfParser = new PDFParser(undefined, true);
 
-      pdfParser.on("pdfParser_dataError", (error: any) => {
+      pdfParser.on("pdfParser_dataError", (error: unknown) => {
         console.error("PDF2JSON parsing error:", error);
         // Fallback on error
         try {

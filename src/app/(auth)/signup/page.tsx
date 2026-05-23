@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
+  const router = useRouter();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +23,7 @@ export default function SignupPage() {
 
       console.log(response.data);
 
-      alert("Signup successful!");
+      router.push("/dashboard");
     } catch (error) {
       console.error(error);
 

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 import { connectDB } from "../../../../lib/db";
+import { getAuthCookieOptions } from "../../../../lib/auth/cookies";
 import User from "../../../../models/User";
 
 export async function POST(req: Request) {
@@ -60,13 +61,7 @@ export async function POST(req: Request) {
       },
     );
 
-    response.cookies.set("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 60 * 24 * 7,
-      path: "/",
-    });
+    response.cookies.set("token", token, getAuthCookieOptions());
 
     return response;
   } catch (error) {

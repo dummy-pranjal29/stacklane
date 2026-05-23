@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -18,7 +21,7 @@ export default function LoginPage() {
 
       console.log(response.data);
 
-      alert("Login successful!");
+      router.push("/dashboard");
     } catch (error) {
       console.error(error);
 

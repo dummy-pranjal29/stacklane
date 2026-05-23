@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import jwt from "jsonwebtoken";
 
@@ -6,16 +6,11 @@ import { connectDB } from "../../../lib/db";
 
 import { ingestFile } from "../../../lib/ingest";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const cookieHeader = request.headers.get("cookie");
-
-    const token = cookieHeader
-      ?.split("; ")
-      .find((row) => row.startsWith("token="))
-      ?.split("=")[1];
+    const token = request.cookies.get("token")?.value;
 
     if (!token) {
       return NextResponse.json(

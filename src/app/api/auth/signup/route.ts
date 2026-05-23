@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 import { connectDB } from "../../../../lib/db";
+import { getAuthCookieOptions } from "../../../../lib/auth/cookies";
 import User from "../../../../models/User";
 
 export async function POST(req: Request) {
@@ -35,7 +37,17 @@ export async function POST(req: Request) {
       password: hashedPassword,
     });
 
-    return NextResponse.json(
+    const token = jwt.sign(
+      {
+        userId: user._id,
+      },
+      process.env.JWT_SECRET!,
+      {
+        expiresIn: "7d",
+      },
+    );
+
+    const response = NextResponse.json(
       {
         success: true,
         user,
@@ -44,6 +56,10 @@ export async function POST(req: Request) {
         status: 201,
       },
     );
+
+    response.cookies.set("token", token, getAuthCookieOptions());
+
+    return response;
   } catch (error) {
     console.error("Signup Error:", error);
 

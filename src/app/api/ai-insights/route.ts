@@ -10,6 +10,8 @@ import { generateSpendAnalytics } from "../../../lib/analytics/spend";
 
 import { extractSubscriptionSignals } from "../../../lib/extractors/subscription";
 
+import { analyzeSpend } from "../../../lib/ai/analyzeSpend";
+
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
@@ -64,17 +66,19 @@ export async function GET(request: NextRequest) {
       subscriptionSignals,
     );
 
+    const insights = await analyzeSpend(analytics);
+
     return NextResponse.json({
       success: true,
 
-      analytics,
+      insights,
     });
   } catch (error) {
-    console.error("ANALYTICS API ERROR:", error);
+    console.error("AI INSIGHTS ERROR:", error);
 
     return NextResponse.json(
       {
-        error: "Failed to generate analytics",
+        error: "Failed to generate AI insights",
       },
 
       {

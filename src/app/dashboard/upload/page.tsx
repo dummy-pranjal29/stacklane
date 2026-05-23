@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import axios from "axios";
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -10,7 +11,21 @@ export default function UploadPage() {
       return;
     }
 
-    console.log("Uploading file:", file.name);
+    const formData = new FormData();
+
+    formData.append("file", file);
+
+    try {
+      const response = await axios.post("/api/upload", formData);
+
+      console.log(response.data);
+
+      alert("File uploaded successfully!");
+    } catch (error) {
+      console.error(error);
+
+      alert("Upload failed");
+    }
   };
   return (
     <div className="p-10">

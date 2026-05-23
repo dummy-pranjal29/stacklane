@@ -51,15 +51,24 @@ export async function POST(req: Request) {
       },
     );
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         success: true,
-        token,
       },
       {
         status: 200,
       },
     );
+
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("Login Error:", error);
 

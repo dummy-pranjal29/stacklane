@@ -1,22 +1,37 @@
 import * as XLSX from "xlsx";
 
 export function parseExcel(buffer: Buffer) {
-  const workbook = XLSX.read(buffer, {
-    type: "buffer",
-  });
+  try {
+    const workbook = XLSX.read(buffer, {
+      type: "buffer",
+    });
 
-  const sheetNames = workbook.SheetNames;
+    const sheetNames = workbook.SheetNames;
 
-  const parsedSheets = sheetNames.map((sheetName) => {
-    const worksheet = workbook.Sheets[sheetName];
+    if (!sheetNames || sheetNames.length === 0) {
+      throw new Error("No sheets found in Excel file");
+    }
 
-    const data = XLSX.utils.sheet_to_json(worksheet);
+    const parsedSheets = sheetNames.map((sheetName) => {
+      const worksheet = workbook.Sheets[sheetName];
 
-    return {
-      sheetName,
-      data,
-    };
-  });
+      if (!worksheet) {
+        throw new Error(`Could not read sheet: ${sheetName}`);
+      }
 
-  return parsedSheets;
+      const data = XLSX.utils.sheet_to_json(worksheet);
+
+      return {
+        sheetName,
+        data,
+      };
+    });
+
+    return parsedSheets;
+  } catch (error) {
+    console.error("Excel parse error:", error);
+    throw new Error(
+      `Excel parsing failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
 }

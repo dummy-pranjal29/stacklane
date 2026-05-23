@@ -67,11 +67,14 @@ export async function POST(request: Request) {
       subscriptionSignals: result.subscriptionSignals,
     });
   } catch (error) {
-    console.error(error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    console.error("Upload error:", errorMessage, error);
 
     return NextResponse.json(
       {
         error: "Upload ingestion failed",
+        details: errorMessage,
       },
 
       {

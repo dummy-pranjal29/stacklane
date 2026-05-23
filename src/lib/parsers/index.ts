@@ -22,39 +22,61 @@ export async function parseFile(file: File): Promise<ParsedFileResult> {
   const buffer = Buffer.from(bytes);
 
   const fileType = file.type;
+  const fileName = file.name.toLowerCase();
 
-  if (fileType === "text/csv") {
-    const csvText = buffer.toString("utf-8");
-
-    const records = parseCSV(csvText);
-
-    return {
-      type: "csv",
-      data: records,
-    };
+  if (fileType === "text/csv" || fileName.endsWith(".csv")) {
+    try {
+      const csvText = buffer.toString("utf-8");
+      const records = parseCSV(csvText);
+      return {
+        type: "csv",
+        data: records,
+      };
+    } catch (error) {
+      console.error("CSV parsing error:", error);
+      throw new Error(
+        `Failed to parse CSV: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    }
   }
 
-  if (fileType === "application/pdf") {
-    const text = await parsePDF(buffer);
-
-    return {
-      type: "pdf",
-      data: text,
-    };
+  if (fileType === "application/pdf" || fileName.endsWith(".pdf")) {
+    try {
+      const text = await parsePDF(buffer);
+      return {
+        type: "pdf",
+        data: text,
+      };
+    } catch (error) {
+      console.error("PDF parsing error:", error);
+      throw new Error(
+        `Failed to parse PDF: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    }
   }
 
   if (
     fileType ===
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-    fileType === "application/vnd.ms-excel"
+    fileType === "application/vnd.ms-excel" ||
+    fileName.endsWith(".xlsx") ||
+    fileName.endsWith(".xls")
   ) {
-    const sheets = parseExcel(buffer);
-
-    return {
-      type: "excel",
-      data: sheets,
-    };
+    try {
+      const sheets = parseExcel(buffer);
+      return {
+        type: "excel",
+        data: sheets,
+      };
+    } catch (error) {
+      console.error("Excel parsing error:", error);
+      throw new Error(
+        `Failed to parse Excel: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    }
   }
 
-  throw new Error("Unsupported file type");
+  throw new Error(
+    `Unsupported file type: ${fileType || fileName}. Supported types: CSV, PDF, XLSX, XLS`,
+  );
 }

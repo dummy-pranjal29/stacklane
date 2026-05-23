@@ -1,10 +1,21 @@
 import { parse } from "csv-parse/sync";
 
 export function parseCSV(csvText: string) {
-  const records = parse(csvText, {
-    columns: true,
-    skip_empty_lines: true,
-  });
+  try {
+    const records = parse(csvText, {
+      columns: true,
+      skip_empty_lines: true,
+    });
 
-  return records;
+    if (!Array.isArray(records) || records.length === 0) {
+      console.warn("CSV parsing resulted in empty records");
+    }
+
+    return records;
+  } catch (error) {
+    console.error("CSV parse error:", error);
+    throw new Error(
+      `CSV parsing failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
 }

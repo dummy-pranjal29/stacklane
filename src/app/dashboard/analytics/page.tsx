@@ -70,6 +70,7 @@ export default function AnalyticsPage() {
 
   const [loading, setLoading] = useState(true);
   const [aiInsights, setAiInsights] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
   const categoryData = analytics
     ? Object.entries(analytics.categoryBreakdown).map(([name, value]) => ({
         name,
@@ -90,7 +91,11 @@ export default function AnalyticsPage() {
         const response = await axios.get("/api/analytics");
 
         setAnalytics(response.data.analytics);
+        setAiLoading(true);
+
         const aiResponse = await axios.get("/api/ai-insights");
+
+        setAiLoading(false);
 
         setAiInsights(aiResponse.data.insights);
       } catch (error) {
@@ -178,7 +183,19 @@ export default function AnalyticsPage() {
         <h2 className="text-xl font-semibold mb-4">AI Financial Insights</h2>
 
         <div className="border border-blue-500/30 bg-blue-500/10 rounded-lg p-4 whitespace-pre-wrap text-sm leading-7">
-          {aiInsights || "Generating AI insights..."}
+          {aiLoading ? (
+            <div className="space-y-3 animate-pulse">
+              <div>Analyzing vendor concentration...</div>
+
+              <div>Evaluating recurring spend behavior...</div>
+
+              <div>Detecting optimization opportunities...</div>
+
+              <div>Generating executive financial reasoning...</div>
+            </div>
+          ) : (
+            aiInsights
+          )}
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

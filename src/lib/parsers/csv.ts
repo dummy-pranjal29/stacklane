@@ -1,8 +1,10 @@
 import { parse } from "csv-parse/sync";
 
-export function parseCSV(csvText: string) {
+export async function parseCSV(
+  csvText: string,
+): Promise<Record<string, string>[]> {
   try {
-    const records = parse(csvText, {
+    const records: Record<string, string>[] = parse(csvText, {
       columns: true,
       skip_empty_lines: true,
     });

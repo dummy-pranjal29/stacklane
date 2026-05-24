@@ -10,9 +10,15 @@ import {
 } from "./extractors/normalize";
 
 import { extractSubscriptionSignals } from "./extractors/subscription";
+import {
+  partitionPersistableFinancialRecords,
+} from "./ingestion/validateFinancialRecord";
+import type { RejectedFinancialRecord } from "./ingestion/validateFinancialRecord";
 
 type IngestResult = {
   normalizedRecords: NormalizedFinancialRecord[];
+
+  rejectedRecords: RejectedFinancialRecord[];
 
   subscriptionSignals: ReturnType<typeof extractSubscriptionSignals>;
 };
@@ -45,47 +51,57 @@ export async function ingestFile(
 
     const normalizedRecords = normalizeRecords(rawRecords, parsed.type);
 
-    const subscriptionSignals = extractSubscriptionSignals(normalizedRecords);
+    const { acceptedRecords, rejectedRecords } =
+      partitionPersistableFinancialRecords(normalizedRecords);
 
-    await FinancialRecord.insertMany(
-      normalizedRecords.map((record) => ({
-        userId,
+    const subscriptionSignals = extractSubscriptionSignals(acceptedRecords);
 
-        vendor: record.vendor,
+    if (acceptedRecords.length > 0) {
+      await FinancialRecord.insertMany(
+        acceptedRecords.map((record) => ({
+          userId,
 
-        amount: record.amount,
+          vendor: record.vendor,
 
-        currency: record.currency,
+          amount: record.amount,
 
-        category: record.category,
+          currency: record.currency,
 
-        billingModel: record.billingModel,
+          category: record.category,
 
-        sourceType: record.sourceType,
+          billingModel: record.billingModel,
 
-        date: record.date,
-      })),
-    );
-    await SubscriptionSignalModel.insertMany(
-      subscriptionSignals.map((signal) => ({
-        userId,
+          sourceType: record.sourceType,
 
-        vendor: signal.vendor,
+          date: record.date,
+        })),
+      );
+    }
 
-        billingModel: signal.billingModel,
+    if (subscriptionSignals.length > 0) {
+      await SubscriptionSignalModel.insertMany(
+        subscriptionSignals.map((signal) => ({
+          userId,
 
-        recurringLikelihood: signal.recurringLikelihood,
+          vendor: signal.vendor,
 
-        amount: signal.amount,
+          billingModel: signal.billingModel,
 
-        currency: signal.currency,
+          recurringLikelihood: signal.recurringLikelihood,
 
-        date: signal.date,
-      })),
-    );
+          amount: signal.amount,
+
+          currency: signal.currency,
+
+          date: signal.date,
+        })),
+      );
+    }
 
     return {
       normalizedRecords,
+
+      rejectedRecords,
 
       subscriptionSignals,
     };

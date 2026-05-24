@@ -59,6 +59,8 @@ export async function POST(request: NextRequest) {
 
       normalizedRecords: result.normalizedRecords,
 
+      rejectedRecords: result.rejectedRecords,
+
       subscriptionSignals: result.subscriptionSignals,
     });
   } catch (error) {

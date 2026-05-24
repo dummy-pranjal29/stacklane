@@ -8,6 +8,16 @@ type AnalyticsInput = {
   vendorBreakdown: Record<string, number>;
 
   categoryBreakdown: Record<string, number>;
+
+  evidenceSummary: {
+    recordCount: number;
+
+    tracedRecordCount: number;
+
+    untracedRecordCount: number;
+
+    sourceBatchCount: number;
+  };
 };
 
 export function buildSpendAnalysisPrompt(analytics: AnalyticsInput) {

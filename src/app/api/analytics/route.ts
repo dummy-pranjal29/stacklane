@@ -54,6 +54,10 @@ export async function GET(request: NextRequest) {
       sourceType: record.sourceType,
 
       date: record.date,
+
+      ingestionBatchId: record.ingestionBatchId
+        ? String(record.ingestionBatchId)
+        : undefined,
     }));
 
     const subscriptionSignals = extractSubscriptionSignals(normalizedRecords);

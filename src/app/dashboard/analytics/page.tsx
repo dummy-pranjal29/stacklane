@@ -27,6 +27,16 @@ type Analytics = {
   vendorBreakdown: Record<string, number>;
 
   categoryBreakdown: Record<string, number>;
+
+  evidenceSummary: {
+    recordCount: number;
+
+    tracedRecordCount: number;
+
+    untracedRecordCount: number;
+
+    sourceBatchCount: number;
+  };
 };
 
 export default function AnalyticsPage() {
@@ -95,6 +105,36 @@ export default function AnalyticsPage() {
           <h2 className="text-sm text-gray-500">Recurring Spend</h2>
 
           <p className="text-2xl font-bold">{analytics.recurringSpend}</p>
+        </div>
+      </div>
+
+      <div className="border rounded-xl p-4">
+        <h2 className="text-xl font-semibold mb-4">Evidence Coverage</h2>
+
+        <div className="space-y-2">
+          <div className="flex justify-between">
+            <span>Accepted records</span>
+
+            <span>{analytics.evidenceSummary.recordCount}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Traceable records</span>
+
+            <span>{analytics.evidenceSummary.tracedRecordCount}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Source batches</span>
+
+            <span>{analytics.evidenceSummary.sourceBatchCount}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Legacy untraced records</span>
+
+            <span>{analytics.evidenceSummary.untracedRecordCount}</span>
+          </div>
         </div>
       </div>
 

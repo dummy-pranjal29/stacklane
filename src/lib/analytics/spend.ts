@@ -2,6 +2,10 @@ import { FinancialRecord } from "../extractors/normalize";
 
 import { SubscriptionSignal } from "../extractors/subscription";
 
+export type AnalyticsFinancialRecord = FinancialRecord & {
+  ingestionBatchId?: string;
+};
+
 export type SpendAnalytics = {
   totalSpend: number;
 
@@ -12,10 +16,20 @@ export type SpendAnalytics = {
   recurringSpend: number;
 
   categoryBreakdown: Record<string, number>;
+
+  evidenceSummary: {
+    recordCount: number;
+
+    tracedRecordCount: number;
+
+    untracedRecordCount: number;
+
+    sourceBatchCount: number;
+  };
 };
 
 export function generateSpendAnalytics(
-  records: FinancialRecord[],
+  records: AnalyticsFinancialRecord[],
 
   subscriptionSignals: SubscriptionSignal[],
 ): SpendAnalytics {
@@ -29,6 +43,10 @@ export function generateSpendAnalytics(
 
   const categoryBreakdown: Record<string, number> = {};
 
+  const sourceBatchIds = new Set<string>();
+
+  let tracedRecordCount = 0;
+
   for (const record of records) {
     totalSpend += record.amount;
 
@@ -40,6 +58,12 @@ export function generateSpendAnalytics(
 
     categoryBreakdown[record.category] =
       (categoryBreakdown[record.category] || 0) + record.amount;
+
+    if (record.ingestionBatchId) {
+      tracedRecordCount += 1;
+
+      sourceBatchIds.add(record.ingestionBatchId);
+    }
   }
 
   for (const signal of subscriptionSignals) {
@@ -58,5 +82,15 @@ export function generateSpendAnalytics(
     recurringSpend,
 
     categoryBreakdown,
+
+    evidenceSummary: {
+      recordCount: records.length,
+
+      tracedRecordCount,
+
+      untracedRecordCount: records.length - tracedRecordCount,
+
+      sourceBatchCount: sourceBatchIds.size,
+    },
   };
 }

@@ -16,6 +16,12 @@ describe("AI spend analysis prompt", () => {
       categoryBreakdown: {
         AI: 100,
       },
+      evidenceSummary: {
+        recordCount: 1,
+        tracedRecordCount: 1,
+        untracedRecordCount: 0,
+        sourceBatchCount: 1,
+      },
     });
 
     expect(prompt).toContain("Use only the Analytics Data below.");

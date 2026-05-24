@@ -22,7 +22,8 @@ export async function analyzeSpend(analytics: SpendAnalytics) {
       {
         role: "system",
 
-        content: "You are an elite financial intelligence analyst.",
+        content:
+          "You explain deterministic financial analytics. Use only the provided metrics. Do not speculate, invent savings, or infer causes without evidence.",
       },
 
       {
@@ -32,7 +33,7 @@ export async function analyzeSpend(analytics: SpendAnalytics) {
       },
     ],
 
-    temperature: 0.4,
+    temperature: 0,
   });
 
   return completion.choices[0]?.message?.content || "No insights generated.";

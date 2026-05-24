@@ -29,42 +29,6 @@ type Analytics = {
   categoryBreakdown: Record<string, number>;
 };
 
-function generateInsights(analytics: Analytics) {
-  const insights: string[] = [];
-
-  const topVendor = Object.entries(analytics.vendorBreakdown).sort(
-    (a, b) => b[1] - a[1],
-  )[0];
-
-  const topCategory = Object.entries(analytics.categoryBreakdown).sort(
-    (a, b) => b[1] - a[1],
-  )[0];
-
-  if (topVendor) {
-    insights.push(
-      `${topVendor[0]} is the highest spend vendor at ${topVendor[1]}.`,
-    );
-  }
-
-  if (topCategory) {
-    insights.push(
-      `${topCategory[0]} dominates spending categories with ${topCategory[1]}.`,
-    );
-  }
-
-  if (analytics.recurringSpend > 0) {
-    insights.push(`Recurring spend totals ${analytics.recurringSpend}.`);
-  }
-
-  if (analytics.currencyBreakdown.INR && analytics.currencyBreakdown.USD) {
-    insights.push(
-      `Multi-currency activity detected across INR and USD expenditures.`,
-    );
-  }
-
-  return insights;
-}
-
 export default function AnalyticsPage() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
 
@@ -185,13 +149,13 @@ export default function AnalyticsPage() {
         <div className="border border-blue-500/30 bg-blue-500/10 rounded-lg p-4 whitespace-pre-wrap text-sm leading-7">
           {aiLoading ? (
             <div className="space-y-3 animate-pulse">
-              <div>Analyzing vendor concentration...</div>
+              <div>Reading verified spend totals...</div>
 
-              <div>Evaluating recurring spend behavior...</div>
+              <div>Checking vendor and category concentration...</div>
 
-              <div>Detecting optimization opportunities...</div>
+              <div>Reviewing recurring spend metric...</div>
 
-              <div>Generating executive financial reasoning...</div>
+              <div>Preparing evidence-bounded summary...</div>
             </div>
           ) : (
             aiInsights

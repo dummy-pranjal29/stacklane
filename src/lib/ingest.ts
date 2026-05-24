@@ -2,7 +2,7 @@ import FinancialRecord from "../models/FinancialRecord";
 import { extractPDFInvoice } from "./extractors/pdfInvoice";
 import SubscriptionSignalModel from "../models/SubscriptionSignal";
 
-import { parseFile } from "./parsers";
+import { parseFile } from "./ingestion/parseFile";
 
 import {
   normalizeRecords,
@@ -17,6 +17,8 @@ type IngestResult = {
   subscriptionSignals: ReturnType<typeof extractSubscriptionSignals>;
 };
 
+type RawRecord = Record<string, unknown>;
+
 export async function ingestFile(
   file: File,
 
@@ -25,26 +27,20 @@ export async function ingestFile(
   try {
     const parsed = await parseFile(file);
 
-    let rawRecords: Record<string, unknown>[] = [];
+    let rawRecords: RawRecord[];
 
-    if (parsed.type === "csv") {
-      rawRecords = parsed.data as Record<string, unknown>[];
-    }
+    switch (parsed.type) {
+      case "csv":
+        rawRecords = parsed.data;
+        break;
 
-    if (parsed.type === "excel") {
-      const sheets = parsed.data as {
-        sheetName: string;
+      case "excel":
+        rawRecords = parsed.data.flatMap((sheet) => sheet.data);
+        break;
 
-        data: Record<string, unknown>[];
-      }[];
-
-      rawRecords = sheets.flatMap((sheet) => sheet.data);
-    }
-
-    if (parsed.type === "pdf") {
-      const extracted = extractPDFInvoice(parsed.data as string);
-
-      rawRecords = [extracted];
+      case "pdf":
+        rawRecords = [extractPDFInvoice(parsed.data)];
+        break;
     }
 
     const normalizedRecords = normalizeRecords(rawRecords, parsed.type);

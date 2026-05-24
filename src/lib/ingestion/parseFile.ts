@@ -1,11 +1,11 @@
 import { detectFileType } from "./detectFileType";
-import { normalizeCSVRow } from "./normalize";
+import type { ParsedFileResult } from "./types";
 import { parsePDF } from "../parsers/pdf";
 import { parseExcel } from "../parsers/excel";
 
 import { parseCSV } from "../parsers/csv";
 
-export async function parseFile(file: File) {
+export async function parseFile(file: File): Promise<ParsedFileResult> {
   const fileType = detectFileType(file.name);
 
   switch (fileType) {
@@ -14,9 +14,10 @@ export async function parseFile(file: File) {
 
       const rows = await parseCSV(text);
 
-      return rows.map((row: Record<string, string>) =>
-        normalizeCSVRow({ row }),
-      );
+      return {
+        type: "csv",
+        data: rows,
+      };
     }
 
     case "pdf": {
@@ -24,7 +25,12 @@ export async function parseFile(file: File) {
 
       const buffer = Buffer.from(arrayBuffer);
 
-      return parsePDF(buffer);
+      const text = await parsePDF(buffer);
+
+      return {
+        type: "pdf",
+        data: text,
+      };
     }
 
     case "excel": {
@@ -32,7 +38,12 @@ export async function parseFile(file: File) {
 
       const buffer = Buffer.from(arrayBuffer);
 
-      return parseExcel(buffer);
+      const sheets = parseExcel(buffer);
+
+      return {
+        type: "excel",
+        data: sheets,
+      };
     }
 
     default:

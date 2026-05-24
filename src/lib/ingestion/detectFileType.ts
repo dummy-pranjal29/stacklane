@@ -1,4 +1,4 @@
-export type SupportedFileType = "csv" | "pdf" | "excel";
+import type { SupportedFileType } from "./types";
 
 export function detectFileType(filename: string): SupportedFileType {
   const lowerCaseName = filename.toLowerCase();

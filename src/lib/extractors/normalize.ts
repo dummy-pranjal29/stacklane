@@ -1,31 +1,11 @@
 import { vendorPolicies } from "../policies/vendors";
-export type SupportedCurrency = "USD" | "INR" | "UNKNOWN";
+import type {
+  FinancialRecord,
+  SupportedCurrency,
+  SupportedFileType,
+} from "../ingestion/types";
 
-export type SpendCategory =
-  | "AI"
-  | "Communication"
-  | "Infrastructure"
-  | "Finance"
-  | "Productivity"
-  | "Unknown";
-
-export type BillingModel = "License-Based" | "Consumption-Based" | "Unknown";
-
-export type FinancialRecord = {
-  vendor: string;
-
-  amount: number;
-
-  currency: SupportedCurrency;
-
-  category: SpendCategory;
-
-  billingModel: BillingModel;
-
-  date?: string;
-
-  sourceType: "csv" | "pdf" | "excel";
-};
+export type { FinancialRecord } from "../ingestion/types";
 
 type RawRecord = Record<string, unknown>;
 
@@ -77,7 +57,7 @@ function normalizeAmount(record: RawRecord): number {
 export function normalizeRecords(
   records: RawRecord[],
 
-  sourceType: "csv" | "pdf" | "excel",
+  sourceType: SupportedFileType,
 ): FinancialRecord[] {
   return records.map((record) => {
     const vendor = normalizeVendor(record);

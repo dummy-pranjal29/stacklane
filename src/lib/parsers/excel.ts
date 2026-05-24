@@ -1,6 +1,7 @@
 import * as XLSX from "xlsx";
+import { ParsedExcelSheet } from "../ingestion/types/excel";
 
-export function parseExcel(buffer: Buffer) {
+export function parseExcel(buffer: Buffer): ParsedExcelSheet[] {
   try {
     const workbook = XLSX.read(buffer, {
       type: "buffer",
@@ -19,7 +20,8 @@ export function parseExcel(buffer: Buffer) {
         throw new Error(`Could not read sheet: ${sheetName}`);
       }
 
-      const data = XLSX.utils.sheet_to_json(worksheet);
+      const data: Record<string, unknown>[] =
+        XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet);
 
       return {
         sheetName,

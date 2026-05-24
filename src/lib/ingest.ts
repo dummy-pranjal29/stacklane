@@ -1,4 +1,5 @@
 import FinancialRecord from "../models/FinancialRecord";
+import IngestionBatch from "../models/IngestionBatch";
 import { extractPDFInvoice } from "./extractors/pdfInvoice";
 import SubscriptionSignalModel from "../models/SubscriptionSignal";
 
@@ -16,6 +17,22 @@ import {
 import type { RejectedFinancialRecord } from "./ingestion/validateFinancialRecord";
 
 type IngestResult = {
+  ingestionBatch: {
+    id: string;
+
+    status: "completed";
+
+    totalRecordCount: number;
+
+    acceptedRecordCount: number;
+
+    rejectedRecordCount: number;
+
+    subscriptionSignalCount: number;
+
+    durationMs: number;
+  };
+
   normalizedRecords: NormalizedFinancialRecord[];
 
   rejectedRecords: RejectedFinancialRecord[];
@@ -30,6 +47,19 @@ export async function ingestFile(
 
   userId: string,
 ): Promise<IngestResult> {
+  const startedAt = Date.now();
+  const batch = await IngestionBatch.create({
+    userId,
+
+    fileName: file.name,
+
+    fileType: file.type || "unknown",
+
+    fileSize: file.size,
+
+    status: "processing",
+  });
+
   try {
     const parsed = await parseFile(file);
 
@@ -55,11 +85,15 @@ export async function ingestFile(
       partitionPersistableFinancialRecords(normalizedRecords);
 
     const subscriptionSignals = extractSubscriptionSignals(acceptedRecords);
+    const financialRecordIds = [];
+    const subscriptionSignalIds = [];
 
     if (acceptedRecords.length > 0) {
-      await FinancialRecord.insertMany(
+      const insertedRecords = await FinancialRecord.insertMany(
         acceptedRecords.map((record) => ({
           userId,
+
+          ingestionBatchId: batch._id,
 
           vendor: record.vendor,
 
@@ -76,12 +110,18 @@ export async function ingestFile(
           date: record.date,
         })),
       );
+
+      financialRecordIds.push(
+        ...insertedRecords.map((record) => record._id),
+      );
     }
 
     if (subscriptionSignals.length > 0) {
-      await SubscriptionSignalModel.insertMany(
+      const insertedSignals = await SubscriptionSignalModel.insertMany(
         subscriptionSignals.map((signal) => ({
           userId,
+
+          ingestionBatchId: batch._id,
 
           vendor: signal.vendor,
 
@@ -96,9 +136,64 @@ export async function ingestFile(
           date: signal.date,
         })),
       );
+
+      subscriptionSignalIds.push(
+        ...insertedSignals.map((signal) => signal._id),
+      );
     }
 
+    const durationMs = Date.now() - startedAt;
+
+    await IngestionBatch.updateOne(
+      {
+        _id: batch._id,
+      },
+      {
+        $set: {
+          parserType: parsed.type,
+
+          status: "completed",
+
+          totalRecordCount: normalizedRecords.length,
+
+          acceptedRecordCount: acceptedRecords.length,
+
+          rejectedRecordCount: rejectedRecords.length,
+
+          subscriptionSignalCount: subscriptionSignals.length,
+
+          durationMs,
+
+          rejectedRecords: rejectedRecords.map((rejection) => ({
+            reason: rejection.reason,
+
+            record: rejection.record,
+          })),
+
+          financialRecordIds,
+
+          subscriptionSignalIds,
+        },
+      },
+    );
+
     return {
+      ingestionBatch: {
+        id: String(batch._id),
+
+        status: "completed",
+
+        totalRecordCount: normalizedRecords.length,
+
+        acceptedRecordCount: acceptedRecords.length,
+
+        rejectedRecordCount: rejectedRecords.length,
+
+        subscriptionSignalCount: subscriptionSignals.length,
+
+        durationMs,
+      },
+
       normalizedRecords,
 
       rejectedRecords,
@@ -106,6 +201,22 @@ export async function ingestFile(
       subscriptionSignals,
     };
   } catch (error) {
+    await IngestionBatch.updateOne(
+      {
+        _id: batch._id,
+      },
+      {
+        $set: {
+          status: "failed",
+
+          durationMs: Date.now() - startedAt,
+
+          errorMessage:
+            error instanceof Error ? error.message : "Unknown ingestion error",
+        },
+      },
+    );
+
     console.error("Ingest file error:", error);
     throw error;
   }

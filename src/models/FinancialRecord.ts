@@ -3,6 +3,8 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IFinancialRecord extends Document {
   userId: mongoose.Types.ObjectId;
 
+  ingestionBatchId?: mongoose.Types.ObjectId;
+
   vendor: string;
 
   amount: number;
@@ -26,6 +28,12 @@ const FinancialRecordSchema = new Schema<IFinancialRecord>(
       ref: "User",
 
       required: true,
+    },
+
+    ingestionBatchId: {
+      type: Schema.Types.ObjectId,
+
+      ref: "IngestionBatch",
     },
 
     vendor: {

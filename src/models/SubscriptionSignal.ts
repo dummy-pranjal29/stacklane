@@ -3,6 +3,8 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface ISubscriptionSignal extends Document {
   userId: mongoose.Types.ObjectId;
 
+  ingestionBatchId?: mongoose.Types.ObjectId;
+
   vendor: string;
 
   billingModel: string;
@@ -24,6 +26,12 @@ const SubscriptionSignalSchema = new Schema<ISubscriptionSignal>(
       ref: "User",
 
       required: true,
+    },
+
+    ingestionBatchId: {
+      type: Schema.Types.ObjectId,
+
+      ref: "IngestionBatch",
     },
 
     vendor: {

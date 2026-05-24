@@ -3,6 +3,20 @@ import { useState } from "react";
 import axios from "axios";
 
 type UploadResult = {
+  ingestionBatch: {
+    id: string;
+
+    totalRecordCount: number;
+
+    acceptedRecordCount: number;
+
+    rejectedRecordCount: number;
+
+    subscriptionSignalCount: number;
+
+    durationMs: number;
+  };
+
   normalizedRecords: unknown[];
 
   rejectedRecords: unknown[];
@@ -46,8 +60,11 @@ export default function UploadPage() {
   };
 
   const rejectedCount = uploadResult?.rejectedRecords.length ?? 0;
-  const normalizedCount = uploadResult?.normalizedRecords.length ?? 0;
-  const persistedCount = normalizedCount - rejectedCount;
+  const normalizedCount =
+    uploadResult?.ingestionBatch.totalRecordCount ??
+    uploadResult?.normalizedRecords.length ??
+    0;
+  const persistedCount = uploadResult?.ingestionBatch.acceptedRecordCount ?? 0;
 
   return (
     <div className="p-10">
@@ -78,6 +95,12 @@ export default function UploadPage() {
       {uploadResult && (
         <div className="mt-6 border rounded-lg p-4 space-y-2">
           <div className="flex justify-between">
+            <span>Ingestion batch</span>
+
+            <span>{uploadResult.ingestionBatch.id}</span>
+          </div>
+
+          <div className="flex justify-between">
             <span>Normalized records</span>
 
             <span>{normalizedCount}</span>
@@ -98,7 +121,13 @@ export default function UploadPage() {
           <div className="flex justify-between">
             <span>Subscription signals</span>
 
-            <span>{uploadResult.subscriptionSignals.length}</span>
+            <span>{uploadResult.ingestionBatch.subscriptionSignalCount}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Processing time</span>
+
+            <span>{uploadResult.ingestionBatch.durationMs}ms</span>
           </div>
         </div>
       )}

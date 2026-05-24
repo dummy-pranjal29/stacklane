@@ -57,6 +57,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
 
+      ingestionBatch: result.ingestionBatch,
+
       normalizedRecords: result.normalizedRecords,
 
       rejectedRecords: result.rejectedRecords,

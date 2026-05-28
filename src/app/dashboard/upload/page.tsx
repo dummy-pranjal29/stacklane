@@ -1,159 +1,69 @@
 "use client";
+
 import { useState } from "react";
-import axios from "axios";
-
-type UploadResult = {
-  ingestionBatch: {
-    id: string;
-
-    totalRecordCount: number;
-
-    acceptedRecordCount: number;
-
-    rejectedRecordCount: number;
-
-    subscriptionSignalCount: number;
-
-    durationMs: number;
-
-    parserConfidence: "high" | "medium" | "low";
-  };
-
-  normalizedRecords: unknown[];
-
-  rejectedRecords: unknown[];
-
-  subscriptionSignals: unknown[];
-};
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [status, setStatus] = useState("");
 
-  const handleUpload = async () => {
-    if (!file) {
-      setErrorMessage("Please select a file.");
+  const handleUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) return;
 
-      return;
-    }
-
+    setStatus("Uploading file...");
     const formData = new FormData();
-
     formData.append("file", file);
 
     try {
-      setUploading(true);
-      setErrorMessage("");
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
 
-      const response = await axios.post<UploadResult>("/api/upload", formData);
+      if (!res.ok) {
+        throw new Error("Upload failed. Please check your authentication.");
+      }
 
-      console.log(response.data);
-
-      setUploadResult(response.data);
-    } catch (error) {
-      console.error(error);
-
-      setErrorMessage("Upload failed.");
-    } finally {
-      setUploading(false);
+      setStatus("File uploaded and processed successfully.");
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : "An error occurred.");
     }
   };
 
-  const rejectedCount = uploadResult?.rejectedRecords.length ?? 0;
-  const normalizedCount =
-    uploadResult?.ingestionBatch.totalRecordCount ??
-    uploadResult?.normalizedRecords.length ??
-    0;
-  const persistedCount = uploadResult?.ingestionBatch.acceptedRecordCount ?? 0;
-
   return (
-    <div className="p-10">
-      <h1 className="text-3xl font-bold">Upload Files</h1>
-      <p className="mt-4">Upload your invoices, PDFs, or CSV reports here.</p>
-      <div className="mt-8 border-2 border-dashed p-10 rounded-lg">
-        <input
-          type="file"
-          onChange={(e) => {
-            if (e.target.files?.[0]) {
-              setFile(e.target.files[0]);
-            }
-          }}
-        />
-        {file && <p className="mt-4">Selected File: {file.name}</p>}
-      </div>
+    <div className="min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-zinc-100 p-8 flex flex-col items-center">
+      <main className="max-w-2xl w-full bg-white dark:bg-zinc-900 rounded-2xl shadow p-8 border border-zinc-200 dark:border-zinc-800">
+        <h1 className="text-3xl font-bold mb-2">Upload Financial Records</h1>
+        <p className="text-zinc-900 dark:text-zinc-100 font-medium mb-8">
+          Upload your invoices (PDF, CSV, XLSX) for automated spend ingestion.
+        </p>
 
-      <button
-        onClick={handleUpload}
-        disabled={uploading}
-        className="mt-6 bg-black text-white px-6 py-3 rounded"
-      >
-        {uploading ? "Uploading..." : "Upload File"}
-      </button>
-
-      {errorMessage && (
-        <p className="mt-4 text-sm text-red-600">{errorMessage}</p>
-      )}
-
-      {uploadResult && (
-        <div className="mt-6 border rounded-lg p-4 space-y-2">
-          <div className="flex justify-between">
-            <span>Ingestion batch</span>
-
-            <span>{uploadResult.ingestionBatch.id}</span>
+        <form onSubmit={handleUpload} className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <label className="font-semibold text-lg">Select File</label>
+            <input
+              type="file"
+              accept=".pdf,.csv,.xlsx"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-zinc-800 dark:file:text-blue-400 border border-zinc-300 dark:border-zinc-700 rounded-lg p-2 font-medium"
+            />
           </div>
 
-          <div className="flex justify-between">
-            <span>Normalized records</span>
+          <button
+            type="submit"
+            disabled={!file}
+            className="bg-blue-600 text-white font-bold text-lg py-3 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Upload & Process
+          </button>
+        </form>
 
-            <span>{normalizedCount}</span>
+        {status && (
+          <div className="mt-8 p-4 bg-zinc-100 dark:bg-zinc-800 rounded-lg font-bold text-center">
+            {status}
           </div>
-
-          <div className="flex justify-between">
-            <span>Persisted records</span>
-
-            <span>{persistedCount}</span>
-          </div>
-
-          <div className="flex justify-between">
-            <span>Rejected records</span>
-
-            <span>{rejectedCount}</span>
-          </div>
-
-          <div className="flex justify-between">
-            <span>Subscription signals</span>
-
-            <span>{uploadResult.ingestionBatch.subscriptionSignalCount}</span>
-          </div>
-
-          <div className="flex justify-between">
-            <span>Processing time</span>
-
-            <span>{uploadResult.ingestionBatch.durationMs}ms</span>
-          </div>
-
-          <div className="flex justify-between">
-            <span>Parser confidence</span>
-
-            <span
-              className={
-                uploadResult.ingestionBatch.parserConfidence === "high"
-                  ? "text-green-600"
-                  : uploadResult.ingestionBatch.parserConfidence === "medium"
-                    ? "text-yellow-600"
-                    : "text-red-600"
-              }
-            >
-              {uploadResult.ingestionBatch.parserConfidence
-                .charAt(0)
-                .toUpperCase() +
-                uploadResult.ingestionBatch.parserConfidence.slice(1)}
-            </span>
-          </div>
-        </div>
-      )}
+        )}
+      </main>
     </div>
   );
 }

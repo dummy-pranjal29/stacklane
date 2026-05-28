@@ -1,4 +1,4 @@
-type AnalyticsInput = {
+export type AnalyticsInput = {
   totalSpend: number;
 
   recurringSpend: number;

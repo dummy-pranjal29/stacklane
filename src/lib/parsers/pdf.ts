@@ -7,7 +7,7 @@ export async function parsePDF(buffer: Buffer): Promise<string> {
 
       pdfParser.on("pdfParser_dataError", (error: unknown) => {
         console.error("PDF2JSON parsing error:", error);
-        // Fallback on error
+
         try {
           const text = buffer.toString(
             "utf-8",

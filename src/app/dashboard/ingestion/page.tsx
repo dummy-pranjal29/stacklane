@@ -14,6 +14,8 @@ type IngestionBatch = {
 
   parserType?: string;
 
+  parserConfidence?: "high" | "medium" | "low";
+
   status: "processing" | "completed" | "failed";
 
   totalRecordCount: number;
@@ -76,6 +78,8 @@ export default function IngestionAuditPage() {
 
               <th className="p-3 font-medium">Parser</th>
 
+              <th className="p-3 font-medium">Confidence</th>
+
               <th className="p-3 font-medium">Status</th>
 
               <th className="p-3 font-medium">Accepted</th>
@@ -104,6 +108,25 @@ export default function IngestionAuditPage() {
                 </td>
 
                 <td className="p-3">{batch.parserType || "Unknown"}</td>
+
+                <td className="p-3">
+                  <span
+                    className={
+                      batch.parserConfidence === "high"
+                        ? "text-green-600"
+                        : batch.parserConfidence === "medium"
+                          ? "text-yellow-600"
+                          : batch.parserConfidence === "low"
+                            ? "text-red-600"
+                            : "text-gray-600"
+                    }
+                  >
+                    {batch.parserConfidence
+                      ? batch.parserConfidence.charAt(0).toUpperCase() +
+                        batch.parserConfidence.slice(1)
+                      : "Unknown"}
+                  </span>
+                </td>
 
                 <td className="p-3">
                   <span>{batch.status}</span>

@@ -13,6 +13,8 @@ export interface IIngestionBatch extends Document {
 
   parserType?: string;
 
+  parserConfidence?: "high" | "medium" | "low";
+
   status: IngestionBatchStatus;
 
   totalRecordCount: number;
@@ -68,6 +70,12 @@ const IngestionBatchSchema = new Schema<IIngestionBatch>(
 
     parserType: {
       type: String,
+    },
+
+    parserConfidence: {
+      type: String,
+
+      enum: ["high", "medium", "low"],
     },
 
     status: {

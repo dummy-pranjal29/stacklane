@@ -25,6 +25,16 @@ export type SpendAnalytics = {
     untracedRecordCount: number;
 
     sourceBatchCount: number;
+
+    parserConfidenceBreakdown: {
+      high: number;
+
+      medium: number;
+
+      low: number;
+
+      unknown: number;
+    };
   };
 };
 
@@ -32,6 +42,8 @@ export function generateSpendAnalytics(
   records: AnalyticsFinancialRecord[],
 
   subscriptionSignals: SubscriptionSignal[],
+
+  parserConfidenceMap: Record<string, "high" | "medium" | "low"> = {},
 ): SpendAnalytics {
   let totalSpend = 0;
 
@@ -46,6 +58,8 @@ export function generateSpendAnalytics(
   const sourceBatchIds = new Set<string>();
 
   let tracedRecordCount = 0;
+
+  const confidenceBreakdown = { high: 0, medium: 0, low: 0, unknown: 0 };
 
   for (const record of records) {
     totalSpend += record.amount;
@@ -63,6 +77,14 @@ export function generateSpendAnalytics(
       tracedRecordCount += 1;
 
       sourceBatchIds.add(record.ingestionBatchId);
+
+      const confidence = parserConfidenceMap[record.ingestionBatchId];
+
+      if (confidence) {
+        confidenceBreakdown[confidence] += 1;
+      } else {
+        confidenceBreakdown.unknown += 1;
+      }
     }
   }
 
@@ -91,6 +113,8 @@ export function generateSpendAnalytics(
       untracedRecordCount: records.length - tracedRecordCount,
 
       sourceBatchCount: sourceBatchIds.size,
+
+      parserConfidenceBreakdown: confidenceBreakdown,
     },
   };
 }

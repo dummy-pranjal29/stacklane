@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken";
 
 import FinancialRecord from "../../../models/FinancialRecord";
 
+import IngestionBatch from "../../../models/IngestionBatch";
+
 import { connectDB } from "../../../lib/db";
 
 import { generateSpendAnalytics } from "../../../lib/analytics/spend";
@@ -40,6 +42,22 @@ export async function GET(request: NextRequest) {
       userId: decoded.userId,
     }).lean();
 
+    // Fetch ingestion batches to get parser confidence mapping
+    const ingestionBatchIds = records
+      .map((r) => r.ingestionBatchId)
+      .filter(Boolean);
+
+    const batches = await IngestionBatch.find(
+      { _id: { $in: ingestionBatchIds } },
+      { _id: 1, parserConfidence: 1 },
+    ).lean();
+
+    const parserConfidenceMap: Record<string, "high" | "medium" | "low"> = {};
+
+    for (const batch of batches) {
+      parserConfidenceMap[String(batch._id)] = batch.parserConfidence;
+    }
+
     const normalizedRecords = records.map((record) => ({
       vendor: record.vendor,
 
@@ -66,6 +84,8 @@ export async function GET(request: NextRequest) {
       normalizedRecords,
 
       subscriptionSignals,
+
+      parserConfidenceMap,
     );
 
     return NextResponse.json({

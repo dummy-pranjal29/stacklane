@@ -11,9 +11,7 @@ import {
 } from "./extractors/normalize";
 
 import { extractSubscriptionSignals } from "./extractors/subscription";
-import {
-  partitionPersistableFinancialRecords,
-} from "./ingestion/validateFinancialRecord";
+import { partitionPersistableFinancialRecords } from "./ingestion/validateFinancialRecord";
 import type { RejectedFinancialRecord } from "./ingestion/validateFinancialRecord";
 
 type IngestResult = {
@@ -31,6 +29,8 @@ type IngestResult = {
     subscriptionSignalCount: number;
 
     durationMs: number;
+
+    parserConfidence: "high" | "medium" | "low";
   };
 
   normalizedRecords: NormalizedFinancialRecord[];
@@ -79,6 +79,9 @@ export async function ingestFile(
         break;
     }
 
+    const parserConfidence: "high" | "medium" | "low" =
+      parsed.type === "pdf" ? "medium" : "high";
+
     const normalizedRecords = normalizeRecords(rawRecords, parsed.type);
 
     const { acceptedRecords, rejectedRecords } =
@@ -111,9 +114,7 @@ export async function ingestFile(
         })),
       );
 
-      financialRecordIds.push(
-        ...insertedRecords.map((record) => record._id),
-      );
+      financialRecordIds.push(...insertedRecords.map((record) => record._id));
     }
 
     if (subscriptionSignals.length > 0) {
@@ -144,38 +145,40 @@ export async function ingestFile(
 
     const durationMs = Date.now() - startedAt;
 
-    await IngestionBatch.updateOne(
-      {
-        _id: batch._id,
-      },
+    // Try raw MongoDB update
+    const { connectDB } = await import("./db");
+    const db = await connectDB();
+    const collection = db.connection.collection("ingestionbatches");
+
+    console.log("Using raw MongoDB update for batch:", batch._id);
+    const updateResult = await collection.updateOne(
+      { _id: batch._id },
       {
         $set: {
           parserType: parsed.type,
-
+          parserConfidence,
           status: "completed",
-
           totalRecordCount: normalizedRecords.length,
-
           acceptedRecordCount: acceptedRecords.length,
-
           rejectedRecordCount: rejectedRecords.length,
-
           subscriptionSignalCount: subscriptionSignals.length,
-
           durationMs,
-
           rejectedRecords: rejectedRecords.map((rejection) => ({
             reason: rejection.reason,
-
             record: rejection.record,
           })),
-
           financialRecordIds,
-
           subscriptionSignalIds,
+          updatedAt: new Date(),
         },
-      },
+      }
     );
+
+    console.log("MongoDB update result:", updateResult);
+
+    // Verify by querying directly from raw MongoDB
+    const verified = await collection.findOne({ _id: batch._id });
+    console.log("Raw MongoDB Verified - parserConfidence:", verified?.parserConfidence);
 
     return {
       ingestionBatch: {
@@ -192,6 +195,8 @@ export async function ingestFile(
         subscriptionSignalCount: subscriptionSignals.length,
 
         durationMs,
+
+        parserConfidence,
       },
 
       normalizedRecords,

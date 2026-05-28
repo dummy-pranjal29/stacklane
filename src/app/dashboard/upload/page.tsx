@@ -15,6 +15,8 @@ type UploadResult = {
     subscriptionSignalCount: number;
 
     durationMs: number;
+
+    parserConfidence: "high" | "medium" | "low";
   };
 
   normalizedRecords: unknown[];
@@ -90,7 +92,9 @@ export default function UploadPage() {
         {uploading ? "Uploading..." : "Upload File"}
       </button>
 
-      {errorMessage && <p className="mt-4 text-sm text-red-600">{errorMessage}</p>}
+      {errorMessage && (
+        <p className="mt-4 text-sm text-red-600">{errorMessage}</p>
+      )}
 
       {uploadResult && (
         <div className="mt-6 border rounded-lg p-4 space-y-2">
@@ -128,6 +132,25 @@ export default function UploadPage() {
             <span>Processing time</span>
 
             <span>{uploadResult.ingestionBatch.durationMs}ms</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Parser confidence</span>
+
+            <span
+              className={
+                uploadResult.ingestionBatch.parserConfidence === "high"
+                  ? "text-green-600"
+                  : uploadResult.ingestionBatch.parserConfidence === "medium"
+                    ? "text-yellow-600"
+                    : "text-red-600"
+              }
+            >
+              {uploadResult.ingestionBatch.parserConfidence
+                .charAt(0)
+                .toUpperCase() +
+                uploadResult.ingestionBatch.parserConfidence.slice(1)}
+            </span>
           </div>
         </div>
       )}

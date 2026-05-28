@@ -55,6 +55,8 @@ export async function GET(request: NextRequest) {
 
         parserType: batch.parserType,
 
+        parserConfidence: batch.parserConfidence,
+
         status: batch.status,
 
         totalRecordCount: batch.totalRecordCount,

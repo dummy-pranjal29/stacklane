@@ -36,6 +36,16 @@ type Analytics = {
     untracedRecordCount: number;
 
     sourceBatchCount: number;
+
+    parserConfidenceBreakdown: {
+      high: number;
+
+      medium: number;
+
+      low: number;
+
+      unknown: number;
+    };
   };
 };
 
@@ -134,6 +144,44 @@ export default function AnalyticsPage() {
             <span>Legacy untraced records</span>
 
             <span>{analytics.evidenceSummary.untracedRecordCount}</span>
+          </div>
+
+          <div className="mt-4 pt-4 border-t">
+            <h3 className="text-sm font-semibold mb-2">Parser Confidence</h3>
+
+            <div className="space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span className="text-green-600">High confidence</span>
+
+                <span>
+                  {analytics.evidenceSummary.parserConfidenceBreakdown.high}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-yellow-600">Medium confidence</span>
+
+                <span>
+                  {analytics.evidenceSummary.parserConfidenceBreakdown.medium}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-red-600">Low confidence</span>
+
+                <span>
+                  {analytics.evidenceSummary.parserConfidenceBreakdown.low}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-gray-600">Unknown</span>
+
+                <span>
+                  {analytics.evidenceSummary.parserConfidenceBreakdown.unknown}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
